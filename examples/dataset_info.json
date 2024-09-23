@@ -1,0 +1,9 @@
+{
+    "training_nodes_file_name": "../../Dataset-1_backup/joined/training_Dataset-1_nodes_raw.parquet.gzip",
+    "training_edges_file_name": "../../Dataset-1_backup/joined/training_Dataset-1_edges.parquet.gzip",
+    "validation_nodes_file_name": "../../Dataset-1_backup/joined/validation_Dataset-1_nodes_raw.parquet.gzip",
+    "validation_edges_file_name": "../../Dataset-1_backup/joined/validation_Dataset-1_edges.parquet.gzip",
+    "test_nodes_file_name": "../../Dataset-1_backup/joined/testing_Dataset-1_nodes_raw.parquet.gzip",
+    "test_edges_file_name": "../../Dataset-1_backup/joined/testing_Dataset-1_edges.parquet.gzip",
+    "input_feature": "asm_code"
+}
