@@ -4,10 +4,10 @@ python llm2binfuncsim/train_bash.py \
     --dataset_dir ./examples/ \
     --cutoff_len 512 \
     --subsampling_probs 0.5,0.5,0.5 \
-    --do_train \
-    --num_train_epochs 15.0 \
-    --per_device_train_batch_size 1 \
-    --gradient_accumulation_steps 32 \
+    --do_eval \
+    --num_train_epochs 4 \
+    --per_device_train_batch_size 16 \
+    --per_device_eval_batch_size 16 \
     --learning_rate 5e-5 \
     --lr_scheduler_type cosine \
     --weight_decay 0. \
@@ -21,4 +21,6 @@ python llm2binfuncsim/train_bash.py \
     --save_total_limit 5 \
     --use_auth_token True \
     --use_custom_callback \
-    --call_back_save_epochs 3
+    --call_back_save_epochs 3 \
+    --remove_unused_columns false \
+    --load_best_model_at_end true 

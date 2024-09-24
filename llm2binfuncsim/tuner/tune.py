@@ -1,8 +1,7 @@
 from typing import TYPE_CHECKING, Any, Optional
 
-import wandb
+# import wandb
 
-# from llmtuner.extras.callbacks import LogCallback
 # from llmtuner.extras.logging import get_logger
 from llm2binfuncsim.tuner.core import (
     # get_infer_args,
@@ -31,7 +30,6 @@ def run_exp(
         #  finetuning_args,
         #        generating_args,
     ) = get_train_args(args)
-    # callbacks = [LogCallback()] if callbacks is None else callbacks
     # if is_first_node():
     #    wandb.login(key=finetuning_args.wandb_token)
     #    wandb.init(
@@ -40,7 +38,7 @@ def run_exp(
     #    )
 
     # if finetuning_args.stage == "cl":
-    run_cl(model_args, data_args, training_args)  # , callbacks)
+    run_cl(model_args, data_args, training_args)
     # else:
     #    raise ValueError("Unknown task.")
     """

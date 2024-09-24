@@ -8,7 +8,7 @@ from math import floor
 import networkx as nx
 from networkx import Graph
 
-HERMESSIM_NPOS = 1000
+HERMESSIM_NPOS = 10
 
 
 class SoftBatchPairSampler(Sampler[list[int]]):
@@ -69,19 +69,19 @@ class StrongBatchPairSampler(Sampler[list[int]]):
         self,
         G: Graph,
         node_to_rid: dict[str, int],
-        batch_size: int,
+        pool_size: int,
         seed: int = 0,
     ):
         self.G: Graph = G
         self.node_to_rid: dict[str, int] = node_to_rid
-        self.batch_size: int = batch_size
+        self.pool_size: int = pool_size
         self.seed: int = seed
         self.src_nodes: list = [
             node for node in self.G.nodes() if self.G.degree(node) > 1
         ]
 
     def __len__(self) -> int:
-        return len(self.src_nodes)
+        return HERMESSIM_NPOS
 
     def __iter__(self) -> Iterator[list[int]]:
         random.seed(self.seed)
@@ -95,5 +95,5 @@ class StrongBatchPairSampler(Sampler[list[int]]):
             view: Graph = nx.subgraph_view(
                 self.G, filter_node=lambda x: x not in sampled_nodes
             )
-            sampled_nodes.extend(random.sample(list(view.nodes()), self.batch_size - 2))
+            sampled_nodes.extend(random.sample(list(view.nodes()), self.pool_size - 1))
             yield list(map(lambda node: self.node_to_rid[node], sampled_nodes))

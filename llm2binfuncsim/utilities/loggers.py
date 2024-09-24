@@ -28,6 +28,9 @@ class colors(Enum):
     WHITE = "\033[1;37m"
     RESET = "\033[0;39m"
 
+    def __str__(self):
+        return str(self.value)
+
 
 class SimpleLogger:
     """

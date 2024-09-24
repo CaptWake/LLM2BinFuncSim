@@ -7,7 +7,7 @@ from config.data_args import DatasetAttr, DataArguments
 from datasets import Dataset, DatasetDict
 import polars as pl
 from polars import DataFrame, Series
-from utilities.logger import SimpleLogger, get_logger
+from llm2binfuncsim.utilities.loggers import SimpleLogger, get_logger
 
 
 def get_dataset(dataset_args: DataArguments) -> tuple[DatasetDict, DatasetDict]:
