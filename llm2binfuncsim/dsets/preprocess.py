@@ -11,13 +11,34 @@ from llm2binfuncsim.utilities import POOL_SIZE, SimpleLogger, get_logger
 if TYPE_CHECKING:
     from datasets import Dataset, DatasetDict
     from polars import DataFrame
-    from transformers import TrainingArguments
+    from transformers import DataCollatorForLanguageModeling, TrainingArguments
     from transformers.tokenization_utils import BatchEncoding, PreTrainedTokenizer
-
+    import numpy as np
     from llm2binfuncsim.config.data_args import DataArguments
 
 
 logger: SimpleLogger = get_logger()
+
+
+def insert_random_mask(
+    batch: dict, data_collator: "DataCollatorForLanguageModeling"
+) -> dict:
+    """As reported in https://huggingface.co/learn/nlp-course/chapter7/3#fine-tuning-distilbert-with-accelerate,
+    ````
+    We saw that DataCollatorForLanguageModeling also applies random masking with each evaluation, so we’ll see some fluctuations in our perplexity scores with each training run. One way to eliminate this source of randomness is to apply the masking once on the whole test set, and then use the default data collator.
+    ```
+    Args:
+        batch (dict): The input batch of data.
+        data_collator (DataCollatorForLanguageModeling): The data collator object.
+
+    Returns:
+        dict: A dictionary containing masked inputs.
+    """
+    batch = {k: batch[k] for k in ["input_ids", "attention_mask"] if k in batch}
+    features = [dict(zip(batch, t)) for t in zip(*batch.values())]
+    masked_inputs = data_collator(features)
+    # Create a new "masked" column for each column in the dataset
+    return {k: v.numpy() for k, v in masked_inputs.items()}
 
 
 def simple_tokenizing_function(
@@ -45,7 +66,43 @@ def simple_tokenizing_function(
     return features
 
 
-def preprocess_cl_datasets(
+def preprocess_da_datasets(
+    nodes_ds: dict[str, Dataset],
+    tokenizer: "PreTrainedTokenizer",
+    mlm_data_collator: "DataCollatorForLanguageModeling",
+    data_args: "DataArguments",
+) -> dict[str, Dataset | dict[str, "np.array"]]:
+    tokenized_ds = {}
+    for split_name, ds in nodes_ds.items():
+        if split_name == "train":
+            tokenized_ds[split_name] = ds.map(
+                lambda x: simple_tokenizing_function(
+                    examples=x,
+                    tokenizer=tokenizer,
+                    input_feature="asm_code",
+                    cutoff_len=data_args.cutoff_len,
+                ),
+                batched=True,
+                remove_columns=ds.column_names
+            )
+        else:
+            tokenized_ds[split_name] = ds.map(
+                lambda x: simple_tokenizing_function(
+                    examples=x,
+                    tokenizer=tokenizer,
+                    input_feature="asm_code",
+                    cutoff_len=data_args.cutoff_len,
+                ),
+                batched=True,
+            ).map(
+                lambda x: insert_random_mask(batch=x, data_collator=mlm_data_collator),
+                batched=True,
+                remove_columns=ds.column_names,
+            )
+    return tokenized_ds
+
+
+def preprocess_sct_datasets(
     nodes_ds: "DatasetDict",
     edges_ds: "DatasetDict",
     tokenizer: "PreTrainedTokenizer",
@@ -68,6 +125,7 @@ def preprocess_cl_datasets(
                     input_feature="asm_code",
                     cutoff_len=data_args.cutoff_len,
                 ),
+                batched=True,
             )
 
             node_to_rid: dict[str, int] = {}

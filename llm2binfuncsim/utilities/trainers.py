@@ -29,6 +29,27 @@ def collate_padding_train_valid_labels(data, G, data_collator):
     return batch
 
 
+class MLMTrainer(Trainer):
+    def __init__(
+            self,
+            eval_data_collator,
+            **kwargs,
+    ):
+        self.eval_data_collator = eval_data_collator
+        super().__init__(**kwargs)
+
+    def get_eval_dataloader(self, eval_dataset) -> DataLoader:
+        if eval_dataset is None and self.eval_dataset is None:
+            raise ValueError("Trainer: evaluation requires an eval_dataset.")
+
+        return DataLoader(
+            eval_dataset,
+            num_workers=self.args.dataloader_num_workers,
+            pin_memory=self.args.dataloader_pin_memory,
+            batch_size=self.args.per_device_eval_batch_size,
+            collate_fn=self.eval_data_collator,
+        )
+
 class SupConLossTrainer(Trainer):
     def __init__(
         self,

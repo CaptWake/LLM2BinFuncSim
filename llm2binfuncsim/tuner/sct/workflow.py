@@ -1,33 +1,26 @@
 # Inspired by: https://github.com/huggingface/transformers/blob/v4.29.2/examples/pytorch/language-modeling/run_clm.py
 
-from typing import TYPE_CHECKING
 import logging
+from typing import TYPE_CHECKING
 
-from llm2binfuncsim.dsets import (
-    get_dataset,
-    preprocess_cl_datasets,
-)
-
-from tuner.core.loader import load_model_and_tokenizer
 from transformers import DataCollatorWithPadding
+from tuner.core.loader import load_model_and_tokenizer
 
+from llm2binfuncsim.dsets import get_dataset, preprocess_sct_datasets
 from llm2binfuncsim.utilities import (
+    POOL_SIZE,
+    K,
     SimpleLogger,
-    get_logger,
     SupConLossTrainer,
     compute_top_k,
-    K,
-    POOL_SIZE
+    get_logger,
 )
 
 if TYPE_CHECKING:
-    from llm2binfuncsim.config import DataArguments, ModelArguments
     from datasets import DatasetDict
-    from transformers import (
-        PreTrainedModel,
-        PreTrainedTokenizer,
-        TrainingArguments,
-    )
+    from transformers import PreTrainedModel, PreTrainedTokenizer, TrainingArguments
+
+    from llm2binfuncsim.config import DataArguments, ModelArguments
 
 
 def run_sct(
@@ -63,7 +56,7 @@ def run_sct(
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
     logger.debug("Preprocessing datasets...")
-    gs, ds = preprocess_cl_datasets(
+    gs, ds = preprocess_sct_datasets(
         nodes_ds, edge_list_ds, tokenizer, data_args, training_args
     )
 
@@ -74,7 +67,11 @@ def run_sct(
         tokenizer=tokenizer,
         data_collator=data_collator,
         **({"gs": gs} if training_args.do_train else {}),
-        **(ds if training_args.do_train else {})
+        **(
+            {k: v for k, v in ds.items() if k in ["train_dataset"]}
+            if training_args.do_train
+            else {}
+        ),
     )
 
     # Training
@@ -93,8 +90,19 @@ def run_sct(
         # we want to evaluate top_1@100
         predictions = trainer.predict(
             test_dataset=ds["test_dataset"].remove_columns(
-                column_names=["rid", "graph_id", "node_id", "asm_code", "asm_hash", "id"]
+                column_names=[
+                    "rid",
+                    "graph_id",
+                    "node_id",
+                    "asm_code",
+                    "asm_hash",
+                    "id",
+                ]
             )
         )
-        metric: dict[str, float] = {f"top_{K}@{POOL_SIZE}": compute_top_k(predictions[0][0][:, 0, :], pool_size=POOL_SIZE, k=K)}
+        metric: dict[str, float] = {
+            f"top_{K}@{POOL_SIZE}": compute_top_k(
+                predictions[0][0][:, 0, :], pool_size=POOL_SIZE, k=K
+            )
+        }
         trainer.log_metrics("eval", metric)

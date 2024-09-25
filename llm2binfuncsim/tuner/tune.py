@@ -1,22 +1,18 @@
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any, Optional
 
-from llm2binfuncsim.tuner.core import get_train_args
+from tuner.core import get_train_args
 
 # from llmtuner.tuner.core.utils import is_first_node
-from llm2binfuncsim.tuner.sct import run_sct
+from tuner.sct import run_sct
+from tuner.da import run_da
 
 # import wandb
 
 
-if TYPE_CHECKING:
-    from transformers import TrainerCallback
-
-
 def run_exp(
     args: Optional[dict[str, Any]] = None,
-    callbacks: Optional[list["TrainerCallback"]] = None,
 ):
-    (model_args, data_args, training_args) = get_train_args(args)
+    model_args, data_args, training_args = get_train_args(args)
     # if is_first_node():
     #    wandb.login(key=finetuning_args.wandb_token)
     #    wandb.init(
@@ -24,18 +20,13 @@ def run_exp(
     #        tags=[*finetuning_args.wandb_tags] if finetuning_args.wandb_tags else None,
     #    )
 
-    # if finetuning_args.stage == "sct":
-    run_sct(model_args, data_args, training_args)
-    # else:
-    #    raise ValueError("Unknown task.")
-    """
-    elif finetuning_args.stage == "da":
-        run_sft(
+    if model_args.stage == "sct":
+         run_sct(model_args, data_args, training_args)
+    elif model_args.stage == "da":
+        run_da(
             model_args,
             data_args,
-            training_args,
-            finetuning_args,
-            generating_args,
-            callbacks,
+            training_args
         )
-    """
+    else:
+        raise ValueError("Unknown task.")
