@@ -1,0 +1,3 @@
+[submodule "HermesSim"]
+	path = HermesSim
+	url = https://github.com/NSSL-SJTU/HermesSim.git
