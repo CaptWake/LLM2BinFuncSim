@@ -7,12 +7,13 @@ from pydantic import BaseModel
 
 
 class DatasetAttr(BaseModel):
-    training_nodes_file_name: str
-    training_edges_file_name: str
-    validation_nodes_file_name: str
-    validation_edges_file_name: str
-    test_nodes_file_name: str
-    test_edges_file_name: str
+    training_nodes_file_name: Optional[str]
+    training_edges_file_name: Optional[str]
+    validation_nodes_file_name: Optional[str]
+    validation_edges_file_name: Optional[str]
+    test_nodes_file_name: Optional[str]
+    test_edges_file_name: Optional[str]
+    pred_nodes_file_name: Optional[str]
     input_feature: str
 
 

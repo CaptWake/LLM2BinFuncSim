@@ -29,6 +29,17 @@ def collate_padding_train_valid_labels(data, G, data_collator):
     return batch
 
 
+class EmbeddingsExtractionTrainer(Trainer):
+    def get_test_dataloader(self, test_dataset: "Dataset") -> DataLoader:
+        return DataLoader(
+            test_dataset,
+            num_workers=self.args.dataloader_num_workers,
+            pin_memory=self.args.dataloader_pin_memory,
+            batch_size=self.args.per_device_eval_batch_size,
+            collate_fn=self.data_collator,
+        )
+
+
 class MLMTrainer(Trainer):
     def __init__(
         self,

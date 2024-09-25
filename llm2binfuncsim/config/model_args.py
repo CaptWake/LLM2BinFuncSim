@@ -15,7 +15,7 @@ class ModelArguments:
             "help": "Path to pretrained model or model identifier from huggingface.co/models."
         }
     )
-    stage: Optional[Literal["sct", "da"]] = field(
+    stage: Optional[Literal["sct", "da", "emb"]] = field(
         default="sct",
         metadata={"help": "Which stage will be performed in training."},
     )
@@ -49,24 +49,6 @@ class ModelArguments:
             "help": "The specific model version to use (can be a branch name, tag name or commit id)."
         },
     )
-    quantization_bit: Optional[int] = field(
-        default=None,
-        metadata={"help": "The number of bits to quantize the model."},
-    )
-    quantization_type: Optional[Literal["fp4", "nf4"]] = field(
-        default="nf4",
-        metadata={"help": "Quantization data type to use in int4 training."},
-    )
-    double_quantization: Optional[bool] = field(
-        default=True,
-        metadata={
-            "help": "Whether to use double quantization in int4 training or not."
-        },
-    )
-    rope_scaling: Optional[Literal["linear", "dynamic"]] = field(
-        default=None,
-        metadata={"help": "Adopt scaled rotary positional embeddings."},
-    )
     checkpoint_dir: Optional[str] = field(
         default=None,
         metadata={
@@ -77,24 +59,6 @@ class ModelArguments:
         default=False,
         metadata={"help": "Enable FlashAttention-2 for faster training."},
     )
-    shift_attn: Optional[bool] = field(
-        default=False,
-        metadata={
-            "help": "Enable shift short attention (S^2-Attn) proposed by LongLoRA."
-        },
-    )
-    reward_model: Optional[str] = field(
-        default=None,
-        metadata={
-            "help": "Path to the directory containing the checkpoints of the reward model."
-        },
-    )
-    plot_loss: Optional[bool] = field(
-        default=False,
-        metadata={
-            "help": "Whether to plot the training loss after fine-tuning or not."
-        },
-    )
     hf_auth_token: Optional[str] = field(
         default=None,
         metadata={"help": "Auth token to log in with Hugging Face Hub."},
@@ -102,10 +66,6 @@ class ModelArguments:
     export_dir: Optional[str] = field(
         default=None,
         metadata={"help": "Path to the directory to save the exported model."},
-    )
-    qlora_compute_dtype: Optional[str] = field(
-        default="fp32",
-        metadata={"help": "The compute_dtype option from bitsandbytes."},
     )
     use_custom_callback: Optional[bool] = field(
         default=False, metadata={"help": "Whether enable custom callbacks."}
@@ -126,20 +86,7 @@ class ModelArguments:
         if self.checkpoint_dir is not None:  # support merging multiple lora weights
             self.checkpoint_dir = [cd.strip() for cd in self.checkpoint_dir.split(",")]
 
-        if self.quantization_bit is not None:
-            assert self.quantization_bit in [
-                4,
-                8,
-            ], "We only accept 4-bit or 8-bit quantization."
-
         if self.use_auth_token == True and self.hf_auth_token is not None:
             from huggingface_hub.hf_api import HfFolder  # lazy load
 
             HfFolder.save_token(self.hf_auth_token)
-
-        if self.qlora_compute_dtype == "bf16":
-            self.compute_dtype = bfloat16
-        elif self.qlora_compute_dtype == "fp16":
-            self.compute_dtype = float16
-        else:
-            self.compute_dtype = float32

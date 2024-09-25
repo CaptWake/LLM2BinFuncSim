@@ -1,5 +1,6 @@
 from typing import Any, Optional
 
+from llm2binfuncsim.extract_embeddings import run_emb
 from llm2binfuncsim.tuner.core import get_train_args
 from llm2binfuncsim.tuner.da import run_da
 from llm2binfuncsim.tuner.sct import run_sct
@@ -13,5 +14,7 @@ def run_exp(
         run_sct(model_args, data_args, training_args)
     elif model_args.stage == "da":
         run_da(model_args, data_args, training_args)
+    elif model_args.stage == "emb":
+        run_emb(model_args, data_args, training_args)
     else:
         raise ValueError("Unknown task.")

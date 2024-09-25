@@ -42,7 +42,7 @@ def run_da(
 
     logger.debug("Preprocessing datasets...")
     tokenized_ds = preprocess_da_datasets(
-        nodes_ds, tokenizer, mlm_data_collator, data_args
+        nodes_ds, tokenizer, mlm_data_collator, data_args, training_args
     )
 
     # Initialize our Trainer

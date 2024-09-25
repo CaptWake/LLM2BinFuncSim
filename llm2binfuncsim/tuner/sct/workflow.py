@@ -10,6 +10,7 @@ from llm2binfuncsim.tuner.core import load_model_and_tokenizer
 from llm2binfuncsim.utilities.constants import POOL_SIZE, K
 from llm2binfuncsim.utilities.loggers import SimpleLogger, get_logger
 from llm2binfuncsim.utilities.metrics import compute_top_k
+from llm2binfuncsim.utilities.misc import extract_cls_from_predictions
 from llm2binfuncsim.utilities.trainers import SupConLossTrainer
 
 if TYPE_CHECKING:
@@ -72,7 +73,6 @@ def run_sct(
 
     # Evaluation
     if training_args.do_eval:
-        trainer.add_callback()
         # we want to evaluate top_1@100
         predictions = trainer.predict(
             test_dataset=ds["test_dataset"].remove_columns(
@@ -88,7 +88,7 @@ def run_sct(
         )
         metric: dict[str, float] = {
             f"top_{K}@{POOL_SIZE}": compute_top_k(
-                predictions[0][0][:, 0, :], pool_size=POOL_SIZE, k=K
+                extract_cls_from_predictions(predictions), pool_size=POOL_SIZE, k=K
             )
         }
         trainer.log_metrics("eval", metric)

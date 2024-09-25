@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 import networkx as nx
 import polars as pl
 from datasets import Dataset
+from numpy.typing import ArrayLike
 from polars import DataFrame
 
 from llm2binfuncsim.samplers.pair_sampler import *
@@ -11,7 +12,6 @@ from llm2binfuncsim.utilities.constants import POOL_SIZE
 from llm2binfuncsim.utilities.loggers import SimpleLogger, get_logger
 
 if TYPE_CHECKING:
-    import numpy as np
     from datasets import DatasetDict
     from transformers import DataCollatorForLanguageModeling, TrainingArguments
     from transformers.tokenization_utils import BatchEncoding, PreTrainedTokenizer
@@ -68,39 +68,65 @@ def simple_tokenizing_function(
     return features
 
 
+def tokenize_node_dataset(
+    nodes_ds: Dataset,
+    tokenizer: "PreTrainedTokenizer",
+    data_args: "DataArguments",
+    training_args: "TrainingArguments",
+) -> Dataset:
+
+    with training_args.main_process_first(desc="Tokenizing data"):
+        tokenized_ds = nodes_ds.map(
+            lambda x: simple_tokenizing_function(
+                examples=x,
+                tokenizer=tokenizer,
+                input_feature="asm_code",
+                cutoff_len=data_args.cutoff_len,  # type: ignore
+            ),
+            batched=True,
+        )
+    return tokenized_ds
+
+
 def preprocess_da_datasets(
     nodes_ds: dict[str, Dataset],
     tokenizer: "PreTrainedTokenizer",
     mlm_data_collator: "DataCollatorForLanguageModeling",
     data_args: "DataArguments",
-) -> dict[str, Dataset | dict[str, "np.array"]]:
+    training_args: "TrainingArguments",
+) -> dict[str, Dataset | dict[str, ArrayLike]]:
+    assert data_args.cutoff_len is not None
+
     tokenized_ds = {}
-    for split_name, ds in nodes_ds.items():
-        if split_name == "train":
-            tokenized_ds[split_name] = ds.map(
-                lambda x: simple_tokenizing_function(
-                    examples=x,
-                    tokenizer=tokenizer,
-                    input_feature="asm_code",
-                    cutoff_len=data_args.cutoff_len,
-                ),
-                batched=True,
-                remove_columns=ds.column_names,
-            )
-        else:
-            tokenized_ds[split_name] = ds.map(
-                lambda x: simple_tokenizing_function(
-                    examples=x,
-                    tokenizer=tokenizer,
-                    input_feature="asm_code",
-                    cutoff_len=data_args.cutoff_len,
-                ),
-                batched=True,
-            ).map(
-                lambda x: insert_random_mask(batch=x, data_collator=mlm_data_collator),
-                batched=True,
-                remove_columns=ds.column_names,
-            )
+    with training_args.main_process_first(desc="Tokenizing data"):
+        for split_name, ds in nodes_ds.items():
+            if split_name == "train":
+                tokenized_ds[split_name] = ds.map(
+                    lambda x: simple_tokenizing_function(
+                        examples=x,
+                        tokenizer=tokenizer,
+                        input_feature="asm_code",
+                        cutoff_len=data_args.cutoff_len,  # type: ignore
+                    ),
+                    batched=True,
+                    remove_columns=ds.column_names,
+                )
+            else:
+                tokenized_ds[split_name] = ds.map(
+                    lambda x: simple_tokenizing_function(
+                        examples=x,
+                        tokenizer=tokenizer,
+                        input_feature="asm_code",
+                        cutoff_len=data_args.cutoff_len,  # type: ignore
+                    ),
+                    batched=True,
+                ).map(
+                    lambda x: insert_random_mask(
+                        batch=x, data_collator=mlm_data_collator
+                    ),
+                    batched=True,
+                    remove_columns=ds.column_names,
+                )
     return tokenized_ds
 
 
@@ -114,6 +140,7 @@ def preprocess_sct_datasets(
 
     ds: dict[str, Dataset] = {}
     gs: list[nx.Graph] = []
+    assert data_args.cutoff_len is not None
 
     with training_args.main_process_first(desc="Tokenizing data"):
         for split_name in nodes_ds:
@@ -125,7 +152,7 @@ def preprocess_sct_datasets(
                     examples=x,
                     tokenizer=tokenizer,
                     input_feature="asm_code",
-                    cutoff_len=data_args.cutoff_len,
+                    cutoff_len=data_args.cutoff_len,  # type: ignore
                 ),
                 batched=True,
             )
@@ -169,46 +196,3 @@ def preprocess_sct_datasets(
             ds[split_name] = tokenized_ds.select(sample_idx)
 
     return gs, ds
-
-    def tokenize_data(self, dataset_obj, logger):
-        """Tokenize the data according to the specified task and chunking strategy.
-        Args:
-            dataset_obj: The dataset object containing the data to be tokenized.
-            logger (Logger): The logger object for logging (cache management).
-        Returns:
-            Dataset: The tokenized dataset (with setter).
-        """
-        # Extract useful info from Dataset object
-        input_feature, ds = dataset_obj.input_feature, dataset_obj.nodes_ds
-        # Cache name depends on name of the dataset and chunking strategy
-        cache_path = (
-            logger.tokenized_data_dir
-        )  # os.path.join(logger.cache_dir, f"tokenized_corpus")
-        create_dir(cache_path)
-        # If training, a validation dataset will be also available (handling DatasetDict and not Dataset)
-        cache_reference = create_cache_folder(
-            ds, cache_path=cache_path, cache_filename="tokenized.arrow"
-        )
-        # For now, no more options at this level
-        tokenizing_function = self.simple_tokenizing_function
-        tokenized_datasets = self.map_function(
-            ds,
-            tokenizing_function,
-            cache_reference,
-            arguments={"input_feature": input_feature},
-            load_from_cache_file=self.load_from_cache,
-        )
-        # Always perform chunking (worst case: we set chunk_id == log id) > chunks of 1 element
-        # We'll need another cache path
-        cache_reference = create_cache_folder(
-            tokenized_datasets,
-            cache_path=cache_path,
-            cache_filename="chunked_tokenized.arrow",
-        )
-        tokenized_ds = self.map_function(
-            tokenized_datasets,
-            self.chunk_assemblies,
-            cache_name=cache_reference if self.load_from_cache else None,
-            load_from_cache_file=self.load_from_cache,
-        )
-        dataset_obj.set_tokenized_corpus(tokenized_ds)

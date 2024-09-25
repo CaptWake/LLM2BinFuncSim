@@ -23,7 +23,7 @@ def load_model_and_tokenizer(
             pretrained_model_name_or_path=model_args.model_name_or_path
         )
 
-    tokenizer: "PreTrainedTokenizer" = AutoTokenizer.from_pretrained(
+    tokenizer = AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         use_fast=model_args.use_fast_tokenizer,
         add_prefix_space=True,
