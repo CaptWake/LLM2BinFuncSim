@@ -1,9 +1,8 @@
 from typing import Any, Optional
 
-from tuner.core import get_train_args
-from tuner.da import run_da
-
-from tuner.sct import run_sct
+from llm2binfuncsim.tuner.core import get_train_args
+from llm2binfuncsim.tuner.da import run_da
+from llm2binfuncsim.tuner.sct import run_sct
 
 
 def run_exp(

@@ -1,15 +1,14 @@
 import sys
 
-sys.path.append("../../core")  # nopep8
 import polars as pl
-from config.data_args import DataArguments, DatasetAttr
 
 # from classes.datasets.base_dataset import LogDataset
 from datasets import Dataset, DatasetDict
 from polars import DataFrame, Series
 from transformers import TrainingArguments
 
-from utilities.loggers import SimpleLogger, get_logger
+from llm2binfuncsim.config.data_args import DataArguments, DatasetAttr
+from llm2binfuncsim.utilities.loggers import SimpleLogger, get_logger
 
 
 def get_dataset(

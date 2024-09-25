@@ -5,7 +5,8 @@ from typing import Iterator
 
 import networkx as nx
 from torch.utils.data import Sampler
-from utilities import HERMESSIM_NPOS
+
+from llm2binfuncsim.utilities.constants import HERMESSIM_NPOS
 
 
 class SoftBatchPairSampler(Sampler[list[int]]):

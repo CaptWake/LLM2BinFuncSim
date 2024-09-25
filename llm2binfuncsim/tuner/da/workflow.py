@@ -5,13 +5,16 @@ import math
 from typing import TYPE_CHECKING
 
 from dsets import get_dataset, preprocess_da_datasets
-from tuner.core.loader import load_model_and_tokenizer
-from utilities import MLMTrainer, SimpleLogger, get_logger
+
+from llm2binfuncsim.tuner.core.loader import load_model_and_tokenizer
+from llm2binfuncsim.utilities.loggers import SimpleLogger, get_logger
+from llm2binfuncsim.utilities.trainers import MLMTrainer
 
 if TYPE_CHECKING:
     from transformers import TrainingArguments
 
-    from llm2binfuncsim.config import DataArguments, ModelArguments
+    from llm2binfuncsim.config.data_args import DataArguments
+    from llm2binfuncsim.config.model_args import ModelArguments
 
 from transformers import DataCollatorForLanguageModeling, default_data_collator
 

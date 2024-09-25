@@ -4,16 +4,17 @@ from typing import TYPE_CHECKING
 import networkx as nx
 import polars as pl
 from datasets import Dataset
+from polars import DataFrame
 from samplers.pair_sampler import *
 from utilities import POOL_SIZE, SimpleLogger, get_logger
 
 if TYPE_CHECKING:
     import numpy as np
-    from config.data_args import DataArguments
-    from datasets import Dataset, DatasetDict
-    from polars import DataFrame
+    from datasets import DatasetDict
     from transformers import DataCollatorForLanguageModeling, TrainingArguments
     from transformers.tokenization_utils import BatchEncoding, PreTrainedTokenizer
+
+    from llm2binfuncsim.config.data_args import DataArguments
 
 
 logger: SimpleLogger = get_logger()

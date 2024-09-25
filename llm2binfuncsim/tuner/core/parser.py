@@ -4,8 +4,10 @@ from typing import Any, Dict, Optional, Tuple
 
 import datasets
 import transformers
-from config import DataArguments, ModelArguments
 from transformers import HfArgumentParser, TrainingArguments
+
+from llm2binfuncsim.config.data_args import DataArguments
+from llm2binfuncsim.config.model_args import ModelArguments
 
 
 def _parse_args(

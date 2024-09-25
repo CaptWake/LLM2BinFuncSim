@@ -4,7 +4,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from transformers import Trainer
-from utilities.losses import SupConLoss
+
+from llm2binfuncsim.utilities.losses import SupConLoss
 
 if TYPE_CHECKING:
     import networkx as nx
