@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 import numpy as np
+import torch.nn.functional as F
 from sklearn.metrics.pairwise import cosine_similarity
 
 if TYPE_CHECKING:

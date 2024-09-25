@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 
@@ -26,7 +28,7 @@ class SupConLoss(nn.Module):
         self,
         temperature: float = 0.07,
         contrast_mode: str = "all",
-        base_temperature: float = None,
+        base_temperature: Optional[float] = None,
     ):
         """Initialization module.
         Arguments:
@@ -42,7 +44,7 @@ class SupConLoss(nn.Module):
         )
         self.criterion: Similarity = Similarity(self.temperature)
 
-    def forward(self, features: torch.Tensor, mask: torch.Tensor = None):
+    def forward(self, features: torch.Tensor, mask: Optional[torch.Tensor] = None):
         """Compute loss for model.
         Args:
             features: hidanchor_dot_contrastden vector of shape [bsz, hidden_dim].
