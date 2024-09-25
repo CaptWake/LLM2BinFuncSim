@@ -40,6 +40,6 @@ def compute_mrr_k(batch_embeddings: "torch.Tensor", label: int, k=1):
         dim=-1,
     )
     y = ranks[label]
-    ranks: "torch.Tensor" = ranks.sort(descending=True)[0]
+    ranks = ranks.sort(descending=True)[0]
     position: int = ranks.tolist().index(y) + 1
     return 0 if position > k else 1 / position

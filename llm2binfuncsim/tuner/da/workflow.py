@@ -4,8 +4,8 @@ import logging
 import math
 from typing import TYPE_CHECKING
 
-from dsets import get_dataset, preprocess_da_datasets
-
+from llm2binfuncsim.dsets.loader import get_dataset
+from llm2binfuncsim.dsets.preprocess import preprocess_da_datasets
 from llm2binfuncsim.tuner.core.loader import load_model_and_tokenizer
 from llm2binfuncsim.utilities.loggers import SimpleLogger, get_logger
 from llm2binfuncsim.utilities.trainers import MLMTrainer
