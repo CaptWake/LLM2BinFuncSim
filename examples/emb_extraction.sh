@@ -1,0 +1,11 @@
+python llm2binfuncsim/train_bash.py \
+    --stage emb \
+    --model_name_or_path microsoft/unixcoder-base \
+    --dataset_dir ./examples/ \
+    --subsampling_probs 0.001 \
+    --do_predict \
+    --per_device_eval_batch_size 16 \
+    --cache_dir ./model_cache \
+    --overwrite_cache \
+    --output_dir ./unixcoder-base/ \
+    --overwrite_output_dir \
