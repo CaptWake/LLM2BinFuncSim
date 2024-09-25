@@ -8,6 +8,14 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 mypy = "^1.11.2"
+transformers = "^4.45.0"
+datasets = "^3.0.0"
+polars = "^1.8.2"
+pandas = "^2.2.3"
+torch = "^2.4.1"
+networkx = "^3.3"
+numpy = "^2.1.1"
+scikit-learn = "^1.5.2"
 
 
 [build-system]
