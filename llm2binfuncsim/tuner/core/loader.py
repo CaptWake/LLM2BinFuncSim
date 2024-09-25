@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING, Literal, Optional
 from transformers import AutoModel, AutoModelForMaskedLM, AutoTokenizer
 
 if TYPE_CHECKING:
-    from transformers import PreTrainedModel, PreTrainedTokenizer
     from config import ModelArguments
+    from transformers import PreTrainedModel, PreTrainedTokenizer
 
 
 def load_model_and_tokenizer(

@@ -1,8 +1,9 @@
 import json
 import os
 from dataclasses import dataclass, field
-from pydantic import BaseModel
 from typing import Optional
+
+from pydantic import BaseModel
 
 
 class DatasetAttr(BaseModel):
@@ -13,9 +14,6 @@ class DatasetAttr(BaseModel):
     test_nodes_file_name: str
     test_edges_file_name: str
     input_feature: str
-
-    def __repr__(self) -> str:
-        return self.dataset_name
 
 
 @dataclass

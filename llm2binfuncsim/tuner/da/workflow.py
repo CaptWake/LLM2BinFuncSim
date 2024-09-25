@@ -1,24 +1,20 @@
 # Inspired by: https://github.com/huggingface/transformers/blob/v4.29.2/examples/pytorch/language-modeling/run_clm.py
 
 import logging
-from typing import TYPE_CHECKING
 import math
+from typing import TYPE_CHECKING
 
-from tuner.core.loader import load_model_and_tokenizer
 from dsets import get_dataset, preprocess_da_datasets
+from tuner.core.loader import load_model_and_tokenizer
 from utilities import MLMTrainer, SimpleLogger, get_logger
 
 if TYPE_CHECKING:
     from datasets import DatasetDict
-    from transformers import (PreTrainedModel, PreTrainedTokenizer,
-                              TrainingArguments)
+    from transformers import PreTrainedModel, PreTrainedTokenizer, TrainingArguments
 
     from llm2binfuncsim.config import DataArguments, ModelArguments
 
-from transformers import (
-    DataCollatorForLanguageModeling,
-default_data_collator
-)
+from transformers import DataCollatorForLanguageModeling, default_data_collator
 
 
 def run_da(
@@ -41,13 +37,10 @@ def run_da(
     tokenizer: PreTrainedTokenizer
 
     logger.debug("Loading model and tokenizer...")
-    model, tokenizer = load_model_and_tokenizer(
-        model_args,
-        stage="da"
-    )
+    model, tokenizer = load_model_and_tokenizer(model_args, stage="da")
 
     mlm_data_collator = DataCollatorForLanguageModeling(
-            tokenizer=tokenizer, mlm_probability=0.15
+        tokenizer=tokenizer, mlm_probability=0.15
     )
 
     logger.debug("Preprocessing datasets...")
@@ -65,7 +58,7 @@ def run_da(
         data_collator=mlm_data_collator,
         eval_data_collator=default_data_collator,
         train_dataset=tokenized_ds["train"],
-        eval_dataset=tokenized_ds["validation"]
+        eval_dataset=tokenized_ds["validation"],
     )
 
     # Training
@@ -80,7 +73,9 @@ def run_da(
 
     # Evaluation
     if training_args.do_eval:
-        metrics = trainer.evaluate(eval_dataset=tokenized_ds["test"], metric_key_prefix="eval")
+        metrics = trainer.evaluate(
+            eval_dataset=tokenized_ds["test"], metric_key_prefix="eval"
+        )
         try:
             # metrics["eval_loss"] already contains the mean of the batch losses
             perplexity = math.exp(metrics["eval_loss"])

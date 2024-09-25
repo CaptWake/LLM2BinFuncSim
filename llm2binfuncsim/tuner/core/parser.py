@@ -4,9 +4,8 @@ from typing import Any, Dict, Optional, Tuple
 
 import datasets
 import transformers
-from transformers import HfArgumentParser, TrainingArguments
-
 from config import DataArguments, ModelArguments
+from transformers import HfArgumentParser, TrainingArguments
 
 
 def _parse_args(

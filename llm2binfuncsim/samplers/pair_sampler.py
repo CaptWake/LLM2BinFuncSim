@@ -5,7 +5,6 @@ from typing import Iterator
 
 import networkx as nx
 from torch.utils.data import Sampler
-
 from utilities import HERMESSIM_NPOS
 
 
