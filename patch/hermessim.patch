@@ -1,0 +1,155 @@
+diff --git a/model/core/config.py b/model/core/config.py
+--- a/model/core/config.py
++++ b/model/core/config.py
+@@ -190,7 +190,12 @@ def get_config(args):
+         ),
+         encoder=dict(
+             name='embed',
+-            hbmp=dict(
++            llm=dict(
++                n_node_feat_dim=NODE_STATE_DIM,
++                n_edge_feat_dim=EDGE_STATE_DIM,
++                n_edge_attr=4,
++            ),
++            hbmp=dict(    
+                 hbmp_config=dict(
+                     embed_size=500+2,
+                     embed_dim=32,
+@@ -221,7 +226,7 @@ def get_config(args):
+                 n_node_attr=195,
+                 n_edge_attr=4,
+                 n_pos_enc=4,
+-            ),
++            )
+         ),
+         aggr=dict(
+             name='msoftv2',
+@@ -283,7 +288,7 @@ def get_config(args):
+             graph_vec_regularizer_weight=1e-8,
+             # Add gradient clipping to avoid large gradients.
+             clip_value=10.0,
+-            learning_rate=1e-3,
++            learning_rate=1e-4,
+             weight_decay=0.0,
+             # decay_steps=10000,
+             # decay_rate=1.0,
+diff --git a/model/core/ggnn.py b/model/core/ggnn.py
+index 8b99747..97087dc 100644
+--- a/model/core/ggnn.py
++++ b/model/core/ggnn.py
+@@ -139,6 +139,23 @@ class EmbeddingEncoder(torch.nn.Module):
+         return x, e
+ 
+ 
++class LLMEncoder(torch.nn.Module):
++    def __init__(self, n_node_feat_dim, n_edge_attr, n_edge_feat_dim):
++        super().__init__()
++        # self.node_encoder = AutoModel.from_pretrained(pretrained_path)
++        # freeze the model
++        # self.node_encoder.eval()
++        self.edge_encoder = nn.Embedding(n_edge_attr, n_edge_feat_dim)
++        self.proj_lin =  Linear(-1, n_node_feat_dim, **LINEAR_INIT)
++
++    def forward(self, x, e):
++        # with torch.no_grad():
++        #    x = self.node_encoder(**x).last_hidden_state[:, 0].cpu().numpy()
++        x = self.proj_lin(x.float())
++        e = self.edge_encoder(e)
++        return x, e
++
++
+ class GGNN(torch.nn.Module):
+     def __init__(self, encoder, aggr, n_node_feat_dim, n_edge_feat_dim, layer_groups, n_message_net_layers, skip_mode, output_mode, num_query, n_atte_layers, layer_aggr="add", layer_aggr_kwargs={}, concat_skip=1):
+         super().__init__()
+diff --git a/model/core/gnn_model.py b/model/core/gnn_model.py
+index 61e8327..6a3c810 100644
+--- a/model/core/gnn_model.py
++++ b/model/core/gnn_model.py
+@@ -285,6 +285,7 @@ class GNNModel:
+         seed = config['seed']
+         random.seed(seed)
+         np.random.seed(seed + 1)
++        torch.manual_seed(seed + 2)
+ 
+         self._device = torch.device(config['device'])
+ 
+@@ -312,6 +313,7 @@ class GNNModel:
+     def _create_encoder(self):
+         config = self._config
+         encoder_map = {
++            'llm': LLMEncoder,
+             'mlp': MLPEncoder,
+             'hbmp': HBMPEncoder,
+             'gru': GruEncoder,
+@@ -492,7 +494,8 @@ class GNNModel:
+         # Model initialization
+         self._model_initialize()
+         batch_inputs, label = next(iter(training_set))
+-        self.trace_model(batch_to(batch_inputs, self._device))
++        # breakpoint()
++        # self.trace_model(batch_to(batch_inputs, self._device))
+         trainHelper = TrainHelper(self._model, self._config)
+ 
+         for name, parameters in self._model.named_parameters():
+diff --git a/model/core/graph_factory_base.py b/model/core/graph_factory_base.py
+index 33a0dc5..c33fc87 100644
+--- a/model/core/graph_factory_base.py
++++ b/model/core/graph_factory_base.py
+@@ -68,7 +68,7 @@ class GraphFactoryBase(object):
+         self._batch_size = batch_size
+         log.info("Batch size ({}): {}".format(mode, self._batch_size))
+ 
+-        self._features_type = 'opc'
++        self._features_type = 'bb_embeddings'  # 'opc'
+ 
+         self._used_subgraphs = used_subgraphs
+         self._need_g_filter = set(
+diff --git a/model/main.py b/model/main.py
+index f3dae5b..e170fe2 100755
+--- a/model/main.py
++++ b/model/main.py
+@@ -31,13 +31,15 @@ log = None
+ 
+ 
+ def generate_output_dir(args, base_output_dir="outputs", custom_desc=None):
++    """
+     feature_name = (basename(args.featuresdir) +
+                     "-") if args.featuresdir is not None else ""
+     currentDateAndTime = datetime.now()
+     currentTime = currentDateAndTime.strftime("%m%d_%H%M%S")
+     custom_desc = custom_desc + '-' if custom_desc is not None else ''
+     outdirname = f"Output-{custom_desc}{feature_name}{currentTime}"
+-    outputdir = join(base_output_dir, outdirname)
++    """
++    outputdir = join(base_output_dir, args.config.split(".json")[0].split("/")[1])
+     return outputdir
+ 
+ 
+@@ -50,8 +52,8 @@ def update(d, u):
+     return d
+ 
+ 
+-def iter_configs(args):
+-    COMMAN = "common"
++def iter_configs(args, mode="common"):
++    COMMAN = mode # "common"
+     with open(args.config, "r") as f:
+         tunning_params = json.load(f)
+     base_output_dir = args.outputdir if args.outputdir is not None else "Results"
+@@ -151,7 +153,7 @@ def main():
+     parser.add_argument("--feature_json_name", required=False, default=None,
+                         help="Name of the feature dict json file. ")
+ 
+-    parser.add_argument("--device", default="cuda",
++    parser.add_argument("--device", default="cpu",
+                         help="Device used. ")
+ 
+     parser.add_argument('--num_epochs', type=int,
+@@ -187,6 +189,7 @@ def main():
+     # Iter config items
+     for config, desc, testing in iter_configs(args):
+         # Setup GNNModel.
++        print(config)
+         gnn_model = GNNModel(config)
+ 
+         if testing:
