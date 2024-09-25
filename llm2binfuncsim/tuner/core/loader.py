@@ -4,8 +4,7 @@ from transformers import AutoModel, AutoModelForMaskedLM, AutoTokenizer
 
 if TYPE_CHECKING:
     from transformers import PreTrainedModel, PreTrainedTokenizer
-
-    from llm2binfuncsim.config import ModelArguments
+    from config import ModelArguments
 
 
 def load_model_and_tokenizer(

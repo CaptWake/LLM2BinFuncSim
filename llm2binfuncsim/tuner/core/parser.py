@@ -6,7 +6,7 @@ import datasets
 import transformers
 from transformers import HfArgumentParser, TrainingArguments
 
-from llm2binfuncsim.config import DataArguments, ModelArguments
+from config import DataArguments, ModelArguments
 
 
 def _parse_args(

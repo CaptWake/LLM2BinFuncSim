@@ -9,7 +9,7 @@ from datasets import Dataset, DatasetDict
 from polars import DataFrame, Series
 from transformers import TrainingArguments
 
-from llm2binfuncsim.utilities.loggers import SimpleLogger, get_logger
+from utilities.loggers import SimpleLogger, get_logger
 
 
 def get_dataset(

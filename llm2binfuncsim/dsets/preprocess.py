@@ -5,8 +5,8 @@ import networkx as nx
 import polars as pl
 from datasets import Dataset
 
-from llm2binfuncsim.samplers.pair_sampler import *
-from llm2binfuncsim.utilities import POOL_SIZE, SimpleLogger, get_logger
+from samplers.pair_sampler import *
+from utilities import POOL_SIZE, SimpleLogger, get_logger
 
 if TYPE_CHECKING:
     from datasets import Dataset, DatasetDict
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from transformers import DataCollatorForLanguageModeling, TrainingArguments
     from transformers.tokenization_utils import BatchEncoding, PreTrainedTokenizer
     import numpy as np
-    from llm2binfuncsim.config.data_args import DataArguments
+    from config.data_args import DataArguments
 
 
 logger: SimpleLogger = get_logger()
@@ -83,7 +83,7 @@ def preprocess_da_datasets(
                     cutoff_len=data_args.cutoff_len,
                 ),
                 batched=True,
-                remove_columns=ds.column_names
+                remove_columns=ds.column_names,
             )
         else:
             tokenized_ds[split_name] = ds.map(

@@ -5,7 +5,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from transformers import Trainer
 
-from llm2binfuncsim.utilities.losses import SupConLoss
+from utilities.losses import SupConLoss
 
 if TYPE_CHECKING:
     import networkx as nx
@@ -31,9 +31,9 @@ def collate_padding_train_valid_labels(data, G, data_collator):
 
 class MLMTrainer(Trainer):
     def __init__(
-            self,
-            eval_data_collator,
-            **kwargs,
+        self,
+        eval_data_collator,
+        **kwargs,
     ):
         self.eval_data_collator = eval_data_collator
         super().__init__(**kwargs)
@@ -49,6 +49,7 @@ class MLMTrainer(Trainer):
             batch_size=self.args.per_device_eval_batch_size,
             collate_fn=self.eval_data_collator,
         )
+
 
 class SupConLossTrainer(Trainer):
     def __init__(

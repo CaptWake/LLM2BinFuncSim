@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 from transformers import DataCollatorWithPadding
 from tuner.core.loader import load_model_and_tokenizer
 
-from llm2binfuncsim.dsets import get_dataset, preprocess_sct_datasets
-from llm2binfuncsim.utilities import (
+from dsets import get_dataset, preprocess_sct_datasets
+from utilities import (
     POOL_SIZE,
     K,
     SimpleLogger,

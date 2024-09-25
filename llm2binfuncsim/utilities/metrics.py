@@ -7,19 +7,6 @@ if TYPE_CHECKING:
     import torch
 
 
-def compute_top_k(batch_embeddings: "torch.Tensor", label: int, k=1):
-    batch_size: int = batch_embeddings.size(dim=0)
-    ranks: "torch.Tensor" = F.cosine_similarity(
-        batch_embeddings[:1, :].repeat(batch_size - 1, 1),
-        batch_embeddings[1:, :],
-        dim=-1,
-    )
-    y = ranks[label]
-    ranks = ranks.sort(descending=True)[0]
-    position: int = ranks.tolist().index(y) + 1
-    return 0 if position > k else 1
-
-
 def compute_top_k(node_embeddings, pool_size, k) -> dict[str, float]:
     top_k = 0
     n_eval = 0
