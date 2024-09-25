@@ -17,8 +17,7 @@ from utilities import (
 )
 
 if TYPE_CHECKING:
-    from datasets import DatasetDict
-    from transformers import PreTrainedModel, PreTrainedTokenizer, TrainingArguments
+    from transformers import TrainingArguments
 
     from llm2binfuncsim.config import DataArguments, ModelArguments
 
@@ -27,13 +26,9 @@ def run_sct(
     model_args: "ModelArguments",
     data_args: "DataArguments",
     training_args: "TrainingArguments",
-    # finetuning_args: FinetuningArguments,
 ):
     logger: SimpleLogger = get_logger()
     logger.setLevel(logging.DEBUG)
-
-    nodes_ds: DatasetDict
-    edge_list_ds: DatasetDict
 
     logger.debug("Loading dataset...")
 
@@ -42,14 +37,9 @@ def run_sct(
     logger.debug(nodes_ds.__str__())
     logger.debug(edge_list_ds.__str__())
 
-    model: PreTrainedModel
-    tokenizer: PreTrainedTokenizer
-
     logger.debug("Loading model and tokenizer...")
     model, tokenizer = load_model_and_tokenizer(
         model_args,
-        # finetuning_args,
-        # training_args.do_train,
         stage="sct",
     )
 

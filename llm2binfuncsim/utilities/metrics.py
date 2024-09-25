@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     import torch
 
 
-def compute_top_k(node_embeddings, pool_size, k) -> dict[str, float]:
+def compute_top_k(node_embeddings, pool_size, k) -> float:
     top_k = 0
     n_eval = 0
     # loop retrieving a batch of 100 elements from node_embeddings
@@ -28,7 +28,7 @@ def compute_top_k(node_embeddings, pool_size, k) -> dict[str, float]:
         top_k += 0 if position > k else 1
         n_eval += 1
 
-    return {"topk_acc": top_k / n_eval, "validated_elements": n_eval}
+    return top_k / n_eval
 
 
 def compute_mrr_k(batch_embeddings: "torch.Tensor", label: int, k=1):
