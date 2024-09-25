@@ -1,9 +1,9 @@
 python llm2binfuncsim/train_bash.py \
-    --stage cl \
+    --stage sct \
     --model_name_or_path microsoft/unixcoder-base \
     --dataset_dir ./examples/ \
     --cutoff_len 512 \
-    --subsampling_probs 0.5,0.5,0.5 \
+    --subsampling_probs 0.5,0.5,0.0005 \
     --do_eval \
     --num_train_epochs 4 \
     --per_device_train_batch_size 16 \

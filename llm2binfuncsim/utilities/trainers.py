@@ -1,9 +1,15 @@
-from typing import Any
-from transformers import Trainer
-from torch.utils.data import DataLoader
-from llm2binfuncsim.utilities.losses import SupConLoss
+from typing import TYPE_CHECKING, Any, Optional
+
 import torch
 import torch.nn as nn
+from torch.utils.data import DataLoader
+from transformers import Trainer
+
+from llm2binfuncsim.utilities.losses import SupConLoss
+
+if TYPE_CHECKING:
+    import networkx as nx
+    from datasets import Dataset
 
 
 def collate_padding_train_valid_labels(data, G, data_collator):
@@ -23,22 +29,10 @@ def collate_padding_train_valid_labels(data, G, data_collator):
     return batch
 
 
-class TopkTrainer(Trainer):
-    def get_test_dataloader(self, test_dataset: DataLoader) -> DataLoader:
-
-        return DataLoader(
-            test_dataset,
-            num_workers=self.args.dataloader_num_workers,
-            pin_memory=self.args.dataloader_pin_memory,
-            batch_size=self.args.per_device_eval_batch_size,
-            collate_fn=self.data_collator,
-        )
-
-
 class SupConLossTrainer(Trainer):
     def __init__(
         self,
-        gs,
+        gs: Optional[list["nx.Graph"]] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -59,6 +53,10 @@ class SupConLossTrainer(Trainer):
     def get_train_dataloader(self) -> DataLoader:
         if self.train_dataset is None:
             raise ValueError("Trainer: training requires a train_dataset.")
+        if self.gs is None:
+            raise ValueError(
+                "Trainer: training requires a list of graphs (gs parameter)."
+            )
         return DataLoader(
             self.train_dataset,
             num_workers=self.args.dataloader_num_workers,
@@ -69,16 +67,11 @@ class SupConLossTrainer(Trainer):
             ),
         )
 
-    def get_eval_dataloader(self) -> DataLoader:
-        if self.eval_dataset is None:
-            raise ValueError("Trainer: training requires a train_dataset.")
-
+    def get_test_dataloader(self, test_dataset: "Dataset") -> DataLoader:
         return DataLoader(
-            self.eval_dataset,
+            test_dataset,
             num_workers=self.args.dataloader_num_workers,
             pin_memory=self.args.dataloader_pin_memory,
             batch_size=self.args.per_device_eval_batch_size,
-            collate_fn=lambda x: collate_padding_train_valid_labels(
-                x, self.gs[1], self.data_collator
-            ),
+            collate_fn=self.data_collator,
         )

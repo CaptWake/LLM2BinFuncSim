@@ -1,21 +1,20 @@
 from itertools import chain
-from typing import (
-    TYPE_CHECKING,
-    Literal,
-)
+from typing import TYPE_CHECKING
 
-import polars as pl
 import networkx as nx
-from llm2binfuncsim.utilities.loggers import SimpleLogger, get_logger
-from llm2binfuncsim.samplers.pair_sampler import *
+import polars as pl
 from datasets import Dataset
 
+from llm2binfuncsim.samplers.pair_sampler import *
+from llm2binfuncsim.utilities import POOL_SIZE, SimpleLogger, get_logger
+
 if TYPE_CHECKING:
-    from datasets import DatasetDict, Dataset
-    from llm2binfuncsim.config.data_args import DataArguments
-    from transformers import TrainingArguments
+    from datasets import Dataset, DatasetDict
     from polars import DataFrame
-    from transformers.tokenization_utils import PreTrainedTokenizer, BatchEncoding
+    from transformers import TrainingArguments
+    from transformers.tokenization_utils import BatchEncoding, PreTrainedTokenizer
+
+    from llm2binfuncsim.config.data_args import DataArguments
 
 
 logger: SimpleLogger = get_logger()
@@ -26,14 +25,15 @@ def simple_tokenizing_function(
     tokenizer: "PreTrainedTokenizer",
     input_feature: str,
     cutoff_len: int,
-) -> dict:
-    """Simply tokenizing the input feature of the given dataset.
-    Also implements a truncation vs simple_chunking strategty (decides whether to truncate or not the input text).
+) -> "BatchEncoding":
+    """Simply tokenizing the input feature of the given dataset with a truncation strategy
     Args:
         examples (dict): A dictionary containing example inputs.
+        tokenizer: The tokenizer used to encode the text
+        cutoff_len: The maximum number of tokens
         input_feature (str): The name of the feature containing the input text.
     Returns:
-        dict: Tokenized features for the examples.
+        BatchEncoding: Tokenized features for the examples.
     """
     features: "BatchEncoding" = tokenizer(
         examples[input_feature],
@@ -86,13 +86,13 @@ def preprocess_cl_datasets(
             edge_list = list(G.edges)
 
             if split_name == "train":
-                batch_sampler: SoftBatchPairSampler = SoftBatchPairSampler(
+                batch_sampler = SoftBatchPairSampler(
                     edge_list, node_to_rid, training_args.per_device_train_batch_size
                 )
                 split_name = "train_dataset"
 
             elif split_name == "validation":
-                batch_sampler: SoftBatchPairSampler = SoftBatchPairSampler(
+                batch_sampler = SoftBatchPairSampler(
                     edge_list,
                     node_to_rid,
                     training_args.per_device_train_batch_size,
@@ -101,7 +101,7 @@ def preprocess_cl_datasets(
                 split_name = "eval_dataset"
             else:
                 G.remove_edges_from(nx.selfloop_edges(G))
-                batch_sampler = StrongBatchPairSampler(G, node_to_rid, 100)
+                batch_sampler = StrongBatchPairSampler(G, node_to_rid, POOL_SIZE)
                 split_name = "test_dataset"
 
             # generate a new dataset stacking batches on bottom the other, for distributed setup (avoid sharding issue)

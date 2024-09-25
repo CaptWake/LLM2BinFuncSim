@@ -1,6 +1,5 @@
 # Inspired by: https://github.com/huggingface/transformers/blob/v4.29.2/examples/pytorch/language-modeling/run_clm.py
 
-import math
 from typing import TYPE_CHECKING
 import logging
 
@@ -9,17 +8,16 @@ from llm2binfuncsim.dsets import (
     preprocess_cl_datasets,
 )
 
-# from llmtuner.extras.ploting import plot_loss
 from tuner.core.loader import load_model_and_tokenizer
-from transformers import (
-    DataCollatorWithPadding,
-    Trainer,
-)
+from transformers import DataCollatorWithPadding
+
 from llm2binfuncsim.utilities import (
     SimpleLogger,
     get_logger,
     SupConLossTrainer,
     compute_top_k,
+    K,
+    POOL_SIZE
 )
 
 if TYPE_CHECKING:
@@ -32,7 +30,7 @@ if TYPE_CHECKING:
     )
 
 
-def run_cl(
+def run_sct(
     model_args: "ModelArguments",
     data_args: "DataArguments",
     training_args: "TrainingArguments",
@@ -46,43 +44,41 @@ def run_cl(
 
     logger.debug("Loading dataset...")
 
-    nodes_ds, edge_list_ds = get_dataset(data_args)
+    nodes_ds, edge_list_ds = get_dataset(data_args, training_args)
 
-    logger.debug(nodes_ds)
-    logger.debug(edge_list_ds)
+    logger.debug(nodes_ds.__str__())
+    logger.debug(edge_list_ds.__str__())
 
     model: PreTrainedModel
     tokenizer: PreTrainedTokenizer
 
     logger.debug("Loading model and tokenizer...")
-
     model, tokenizer = load_model_and_tokenizer(
         model_args,
         # finetuning_args,
         # training_args.do_train,
-        stage="cl",
+        stage="sct",
     )
-
-    test_nodes_ds = nodes_ds.pop("test")
-    test_edge_list_ds = edge_list_ds.pop("test")
 
     data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
+    logger.debug("Preprocessing datasets...")
+    gs, ds = preprocess_cl_datasets(
+        nodes_ds, edge_list_ds, tokenizer, data_args, training_args
+    )
+
+    # Initialize our Trainer
+    trainer = SupConLossTrainer(
+        model=model,
+        args=training_args,
+        tokenizer=tokenizer,
+        data_collator=data_collator,
+        **({"gs": gs} if training_args.do_train else {}),
+        **(ds if training_args.do_train else {})
+    )
+
     # Training
     if training_args.do_train:
-        logger.debug("Preprocessing train eval dataset...")
-        gs, ds = preprocess_cl_datasets(
-            nodes_ds, edge_list_ds, tokenizer, data_args, training_args
-        )
-        # Initialize our Trainer
-        trainer = SupConLossTrainer(
-            model=model,
-            args=training_args,
-            tokenizer=tokenizer,
-            data_collator=data_collator,
-            gs=gs,
-            **ds
-        )
         train_result = trainer.train(
             resume_from_checkpoint=training_args.resume_from_checkpoint
         )
@@ -93,20 +89,12 @@ def run_cl(
 
     # Evaluation
     if training_args.do_eval:
-        logger.debug("Preprocessing test dataset...")
+        trainer.add_callback()
         # we want to evaluate top_1@100
-        _, test_ds = preprocess_cl_datasets(
-            test_nodes_ds, test_edge_list_ds, tokenizer, data_args, training_args
-        )
-        trainer = Trainer(
-            model=model,
-            args=training_args,
-            tokenizer=tokenizer,
-            data_collator=data_collator,
-        )
         predictions = trainer.predict(
-            test_dataset=test_ds["test_dataset"].remove_columns(
-                ["rid", "graph_id", "node_id", "asm_code", "asm_hash", "id"]
+            test_dataset=ds["test_dataset"].remove_columns(
+                column_names=["rid", "graph_id", "node_id", "asm_code", "asm_hash", "id"]
             )
         )
-        compute_top_k(predictions[0][0][:, 0, :], pool_size=100, k=1)
+        metric: dict[str, float] = {f"top_{K}@{POOL_SIZE}": compute_top_k(predictions[0][0][:, 0, :], pool_size=POOL_SIZE, k=K)}
+        trainer.log_metrics("eval", metric)

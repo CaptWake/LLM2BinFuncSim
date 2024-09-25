@@ -1,14 +1,12 @@
-from builtins import int
-
-from networkx import Graph
-from torch.utils.data import Sampler
-from typing import Iterator
 import random
+from builtins import int
 from math import floor
-import networkx as nx
-from networkx import Graph
+from typing import Iterator
 
-HERMESSIM_NPOS = 10
+import networkx as nx
+from torch.utils.data import Sampler
+
+from llm2binfuncsim.utilities import HERMESSIM_NPOS
 
 
 class SoftBatchPairSampler(Sampler[list[int]]):
@@ -67,12 +65,12 @@ class StrongBatchPairSampler(Sampler[list[int]]):
 
     def __init__(
         self,
-        G: Graph,
+        G: nx.Graph,
         node_to_rid: dict[str, int],
         pool_size: int,
         seed: int = 0,
     ):
-        self.G: Graph = G
+        self.G: nx.Graph = G
         self.node_to_rid: dict[str, int] = node_to_rid
         self.pool_size: int = pool_size
         self.seed: int = seed
@@ -92,7 +90,7 @@ class StrongBatchPairSampler(Sampler[list[int]]):
             neighbors = list(self.G.neighbors(src_node))
             sampled_nodes.append(random.sample(neighbors, k=1)[0])
             # generate a graph view removing the neighbors of the src_node
-            view: Graph = nx.subgraph_view(
+            view: nx.Graph = nx.subgraph_view(
                 self.G, filter_node=lambda x: x not in sampled_nodes
             )
             sampled_nodes.extend(random.sample(list(view.nodes()), self.pool_size - 1))

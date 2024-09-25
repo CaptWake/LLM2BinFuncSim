@@ -1,16 +1,20 @@
 import sys
 
 sys.path.append("../../core")  # nopep8
-from config.data_args import DatasetAttr, DataArguments
+import polars as pl
+from config.data_args import DataArguments, DatasetAttr
 
 # from classes.datasets.base_dataset import LogDataset
 from datasets import Dataset, DatasetDict
-import polars as pl
 from polars import DataFrame, Series
+from transformers import TrainingArguments
+
 from llm2binfuncsim.utilities.loggers import SimpleLogger, get_logger
 
 
-def get_dataset(dataset_args: DataArguments) -> tuple[DatasetDict, DatasetDict]:
+def get_dataset(
+    dataset_args: DataArguments, training_args: TrainingArguments
+) -> tuple[DatasetDict, DatasetDict]:
 
     def _read_dataset_format(ds_path: str) -> DataFrame:
         if ds_path.endswith(".csv"):
@@ -60,49 +64,46 @@ def get_dataset(dataset_args: DataArguments) -> tuple[DatasetDict, DatasetDict]:
 
     subsampling_probs: list[float] = dataset_args.subsampling_probs
 
-    train_nodes_ds, train_edges_ds = _build_hf_dataset_from_path(
-        dataset_attr.training_nodes_file_name,
-        dataset_attr.training_edges_file_name,
-        subsampling_probs[0],
-    )
+    nodes_ds: DatasetDict = DatasetDict()
+    edge_list_ds: DatasetDict = DatasetDict()
 
-    logger.debug(f"\tLoaded rows for TRAINING...")
+    if training_args.do_train:
+        train_nodes_ds, train_edges_ds = _build_hf_dataset_from_path(
+            dataset_attr.training_nodes_file_name,
+            dataset_attr.training_edges_file_name,
+            subsampling_probs[0],
+        )
 
-    # Now, validation set!
-    validation_nodes_ds: Dataset
-    validation_edges_ds: Dataset
+        logger.debug(f"\tLoaded rows for TRAINING...")
+        nodes_ds.update({"train": train_nodes_ds})
+        edge_list_ds.update({"train": train_edges_ds})
 
-    validation_nodes_ds, validation_edges_ds = _build_hf_dataset_from_path(
-        dataset_attr.validation_nodes_file_name,
-        dataset_attr.validation_edges_file_name,
-        subsampling_probs[1],
-    )
+        # Now, validation set!
+        validation_nodes_ds: Dataset
+        validation_edges_ds: Dataset
 
-    logger.debug(f"\tLoaded rows for VALIDATION...")
+        validation_nodes_ds, validation_edges_ds = _build_hf_dataset_from_path(
+            dataset_attr.validation_nodes_file_name,
+            dataset_attr.validation_edges_file_name,
+            subsampling_probs[1],
+        )
 
-    test_nodes_ds: Dataset
-    test_edges_ds: Dataset
+        logger.debug(f"\tLoaded rows for VALIDATION...")
+        nodes_ds.update({"validation": validation_nodes_ds})
+        edge_list_ds.update({"validation": validation_edges_ds})
 
-    test_nodes_ds, test_edges_ds = _build_hf_dataset_from_path(
-        dataset_attr.test_nodes_file_name,
-        dataset_attr.test_edges_file_name,
-        subsampling_probs[2],
-    )
+    if training_args.do_eval:
+        test_nodes_ds: Dataset
+        test_edges_ds: Dataset
 
-    logger.debug(f"\tLoaded rows for TESTING...")
+        test_nodes_ds, test_edges_ds = _build_hf_dataset_from_path(
+            dataset_attr.test_nodes_file_name,
+            dataset_attr.test_edges_file_name,
+            subsampling_probs[2],
+        )
 
-    nodes_ds: DatasetDict = DatasetDict(
-        {
-            "train": train_nodes_ds,
-            "validation": validation_nodes_ds,
-            "test": test_nodes_ds,
-        }
-    )
-    edge_list_ds: DatasetDict = DatasetDict(
-        {
-            "train": train_edges_ds,
-            "validation": validation_edges_ds,
-            "test": test_edges_ds,
-        }
-    )
+        logger.debug(f"\tLoaded rows for TESTING...")
+        nodes_ds.update({"test": test_nodes_ds})
+        edge_list_ds.update({"test": test_edges_ds})
+
     return nodes_ds, edge_list_ds

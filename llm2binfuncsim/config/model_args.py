@@ -15,8 +15,8 @@ class ModelArguments:
             "help": "Path to pretrained model or model identifier from huggingface.co/models."
         }
     )
-    stage: Optional[Literal["cl", "da"]] = field(
-        default="cl",
+    stage: Optional[Literal["sct", "da"]] = field(
+        default="sct",
         metadata={"help": "Which stage will be performed in training."},
     )
     cache_dir: Optional[str] = field(

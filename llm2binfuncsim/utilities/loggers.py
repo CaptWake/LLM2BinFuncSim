@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from enum import Enum
 import logging
 import sys
+from enum import Enum
 from typing import Optional, TextIO
 
 _logger: Optional[SimpleLogger] = None
