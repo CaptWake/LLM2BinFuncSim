@@ -2,7 +2,7 @@
 name = "llm2binfuncsim"
 version = "0.1.0"
 description = ""
-authors = ["Stefano De Rosa <stefanoderosa1999@gmail.com"]
+authors = ["Stefano De Rosa <stefanoderosa1999@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -17,6 +17,9 @@ networkx = "^3.3"
 numpy = "^2.1.1"
 scikit-learn = "^1.5.2"
 click = "^8.1.7"
+pydantic = "^2.9.2"
+accelerate = "^0.34.2"
+wandb = "^0.18.1"
 
 
 [build-system]

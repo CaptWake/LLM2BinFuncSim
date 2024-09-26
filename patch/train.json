@@ -1,0 +1,13 @@
+{
+    "input_dir": "./data/Dataset-1/features/training/acfg_disasm_Dataset-1_training/",
+    "output_dir": "./inputs/acfg_llm/",
+    "features_filename": "graph_func_dict",
+    "dataset": "Dataset-1",
+    "experiment": "unixcoder-base",
+    "out_format": "pkl",
+    "embeddings_path": "../unixcoder-base/extracted_embeddings/node_embeddings.parquet",
+    "nodes_path": "../../../Dataset-1_backup/joined/training_Dataset-1_nodes_raw.parquet.gzip",
+    "keys_path": "../../../Dataset-1_backup/joined/training_Dataset-1_keys.parquet.gzip",
+    "dump_str": false,
+    "dump_pkl": true
+}
