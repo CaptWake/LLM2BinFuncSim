@@ -3,6 +3,9 @@ INPUTS_URL="https://zenodo.org/records/10369788/files/inputs.tar.xz?download=1"
 DBS_URL="https://zenodo.org/records/10369788/files/dbs.tar.xz?download=1"
 INPUTS_FILENAME="inputs.tar.xz"
 DBS_FILENAME="dbs.tar.xz"
+FEATURES_FOLDER="${SUBMODULE_PATH}/data"
+ZIP_NAME="Dataset-1.zip"
+GID="1gu7ZEhpg3JkznX3_VV2SBCyc6LO7sX2q"
 
 # Function to log messages
 log() {
@@ -53,6 +56,24 @@ download_and_extract() {
     curl --output "$DBS_FILENAME" "$DBS_URL" || handle_error "Error downloading dbs file."
     tar -xvf "$DBS_FILENAME" -C "$SUBMODULE_PATH/dbs/" || handle_error "Error extracting dbs file."
     rm "$DBS_FILENAME"
+
+    # Create FEATURES_FOLDER if it doesn't exist
+    mkdir -p "$FEATURES_FOLDER"
+
+    # Download the file
+    echo "Downloading Dataset-1.zip ..."
+    gdown --id "$GID" --output "${FEATURES_FOLDER}/${ZIP_NAME}" || handle_error "Error: file ${FEATURES_FOLDER}/${ZIP_NAME} not found"
+
+    echo "Download complete: ${FEATURES_FOLDER}/${ZIP_NAME}"
+
+    # Extract the zip file
+    EXTRACT_FOLDER="${FEATURES_FOLDER}/${ZIP_NAME%.zip}"
+    echo "Extracting archive to ${EXTRACT_FOLDER} ..."
+    unzip "${FEATURES_FOLDER}/${ZIP_NAME}" -d "$EXTRACT_FOLDER" || handle "Error: Extraction failed."
+    
+    # Remove the zip file after successful extraction
+    rm "${FEATURES_FOLDER}/${ZIP_NAME}"
+    echo "Removed downloaded zip file."
 }
 
 

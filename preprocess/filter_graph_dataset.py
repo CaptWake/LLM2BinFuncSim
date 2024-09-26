@@ -8,12 +8,8 @@ import polars as pl
 def load_dataset(
     input_path: str, dataset_type: str
 ) -> Tuple[pl.DataFrame, pl.DataFrame]:
-    nodes_path = os.path.join(
-        input_path, f"{dataset_type}_Dataset-1_nodes.parquet.gzip"
-    )
-    edges_path = os.path.join(
-        input_path, f"{dataset_type}_Dataset-1_edges.parquet.gzip"
-    )
+    nodes_path = os.path.join(input_path, f"{dataset_type}_Dataset-1_nodes.parquet")
+    edges_path = os.path.join(input_path, f"{dataset_type}_Dataset-1_edges.parquet")
 
     nodes_df = (
         pl.read_parquet(nodes_path)
@@ -60,10 +56,10 @@ def save_dataset(
     nodes_df: pl.DataFrame, edges_df: pl.DataFrame, output_path: str, dataset_type: str
 ) -> None:
     nodes_path = os.path.join(
-        output_path, f"{dataset_type}_Dataset-1_nodes_filtered.parquet.gzip"
+        output_path, f"{dataset_type}_Dataset-1_nodes_filtered.parquet"
     )
     edges_path = os.path.join(
-        output_path, f"{dataset_type}_Dataset-1_edges_filtered.parquet.gzip"
+        output_path, f"{dataset_type}_Dataset-1_edges_filtered.parquet"
     )
 
     nodes_df.write_parquet(nodes_path)

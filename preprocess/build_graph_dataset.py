@@ -276,7 +276,7 @@ def process_dataset(
             )
         )
 
-    print(f"[*] Saving Results in {output_dataset}_[nodes|edges].parquet.gzip")
+    print(f"[*] Saving Results in {output_dataset}_[nodes|edges].parquet")
     for graph_ids, nodes_info, edge_list in tqdm(results):
         df_keys = pd.concat(
             [df_keys, pd.DataFrame(graph_ids)], axis=0, ignore_index=True
@@ -288,9 +288,9 @@ def process_dataset(
             [df_edges, pd.DataFrame(edge_list)], axis=0, ignore_index=True
         )
 
-    df_keys.to_parquet(str(output_dataset) + "_keys.parquet.gzip", index=False)
-    df_nodes.to_parquet(str(output_dataset) + "_nodes.parquet.gzip", index=False)
-    df_edges.to_parquet(str(output_dataset) + "_edges.parquet.gzip", index=False)
+    df_keys.to_parquet(str(output_dataset) + "_keys.parquet", index=False)
+    df_nodes.to_parquet(str(output_dataset) + "_nodes.parquet", index=False)
+    df_edges.to_parquet(str(output_dataset) + "_edges.parquet", index=False)
 
 
 @click.command()
@@ -299,23 +299,23 @@ def process_dataset(
 @click.option("--seed", default=42, type=int, help="Random seed for sampling")
 def main(pcode, subsample, seed):
     input_dataset_paths = [
-        "data/Dataset-1/raw/training_Dataset-1.csv",
-        "data/Dataset-1/raw/testing_Dataset-1.csv",
-        "data/Dataset-1/raw/validation_Dataset-1.csv",
+        "./HermesSim/data/Dataset-1/training_Dataset-1.csv",
+        "./HermesSim/data/Dataset-1/testing_Dataset-1.csv",
+        "./HermesSim/data/Dataset-1/validation_Dataset-1.csv",
     ]
 
     mode = "pcode" if pcode else "raw"
 
     output_dataset_paths = [
-        f"data/Dataset-1/test/training_Dataset-1",
-        f"data/Dataset-1/test/testing_Dataset-1",
-        f"data/Dataset-1/test/validation_Dataset-1",
+        f"./HermesSim/data/Dataset-1/training_Dataset-1",
+        f"./HermesSim/data/Dataset-1/testing_Dataset-1",
+        f"./HermesSim/data/Dataset-1/validation_Dataset-1",
     ]
 
     disasm_paths = [
-        "data/Dataset-1/raw/features/training/acfg_disasm_Dataset-1_training/",
-        "data/Dataset-1/raw/features/testing/acfg_disasm_Dataset-1_testing/",
-        "data/Dataset-1/raw/features/validation/acfg_disasm_Dataset-1_validation/",
+        "./HermesSim/data/Dataset-1/raw/features/training/acfg_disasm_Dataset-1_training/",
+        "./HermesSim/data/Dataset-1/raw/features/testing/acfg_disasm_Dataset-1_testing/",
+        "./HermesSim/data/Dataset-1/raw/features/validation/acfg_disasm_Dataset-1_validation/",
     ]
 
     sample_fracs = [0.01, 0.01, 0.1] if subsample else [1.0, 1.0, 1.0]
@@ -327,7 +327,7 @@ def main(pcode, subsample, seed):
         process_dataset(
             Path(in_ds_path), Path(out_ds_path), disasm_path, sample_frac, seed, mode
         )
-        print(f"[*] Saved Results in {out_ds_path}_[nodes|edges|keys].parquet.gzip")
+        print(f"[*] Saved Results in {out_ds_path}_[nodes|edges|keys].parquet")
 
     print(f"[*] Done processing data")
 

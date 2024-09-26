@@ -20,6 +20,7 @@ click = "^8.1.7"
 pydantic = "^2.9.2"
 accelerate = "^0.34.2"
 wandb = "^0.18.1"
+gdown = "^5.2.0"
 
 
 [build-system]
